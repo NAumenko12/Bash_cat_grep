@@ -1,80 +1,87 @@
-#include "s21_cat.h"
+#include "s21_grep.h"
 
-char v_output(char ch) {
-  if (ch <= 31 && ch != '\n' && ch != '\r' && ch != '\t') {
-    putchar('^');
-    ch += 64;
-  } else if (ch == 127) {
-    putchar('^');
-    ch = '?';
+void output_line(char *line, int n) {
+  for (int i = 0; i < n; i++) {
+    putchar(line[i]);
   }
-  return ch;
+  if (line[n - 1] != '\n') {
+    putchar('\n');
+  }
 }
 
-void output_line(Flags *flags, char *line, int len) {
-  for (int i = 0; i < len; i++) {
-    if (flags->T && line[i] == '\t') {
-      printf("^I");
-    } else {
-      if (flags->E && (line[i] == '\n' || line[i] == '\r')) {
-        putchar('$');
-      }
-      if (flags->v) {
-        line[i] = v_output(line[i]);
-      }
+void print_match(regex_t *re, char *line) {
+  regmatch_t match;
+  int offset = 0;
+  while (1) {
+    int result = regexec(re, line + offset, 1, &match, 0);
+    if (result != 0) {
+      break;
+    }
+    for (int i = match.rm_so; i < match.rm_eo; i++) {
       putchar(line[i]);
     }
+    putchar('\n');
+    offset += match.rm_eo;
   }
 }
 
-void output(Flags *flags, char **argv) {
-  FILE *f = fopen(argv[optind], "r");
-  if (!f) {
-    perror("fopen");
+void processFile(Flags flags, char *path, regex_t *reg) {
+  FILE *f = fopen(path, "r");
+  if (f == NULL) {
+    if (!flags.s) {
+      perror(path);
+    }
     return;
   }
-  char line[4096];
+  char line[MAX_PATTERN_SIZE];
   int line_count = 1;
-  int empty_count = 0;
-  int current_length = 0;
-  int ch;
-
-  while ((ch = fgetc(f)) != EOF) {
-    line[current_length++] = ch;
-
-    if (ch == '\n') {
-      line[current_length] = '\0';
-
-      if (line[0] == '\n') {
-        empty_count++;
-      } else {
-        empty_count = 0;
+  int counter = 0;
+  while (fgets(line, sizeof(line), f)) {
+    int result = regexec(reg, line, 0, NULL, 0);
+    if ((result == 0 && !flags.v) || (flags.v && result != 0)) {
+      if (!flags.c && !flags.l) {
+        if (!flags.h) {
+          printf("%s:", path);
+        }
+        if (flags.n) {
+          printf("%d:", line_count);
+        }
+        if (flags.o) {
+          print_match(reg, line);
+        } else {
+          output_line(line, strlen(line));
+        }
       }
-
-      if (flags->s && empty_count > 1) {
-        current_length = 0;
-        continue;
-      }
-
-      if (flags->b && line[0] != '\n') {
-        printf("%6d\t", line_count++);
-      } else if (flags->n && !flags->b) {
-        printf("%6d\t", line_count++);
-      }
-
-      output_line(flags, line, current_length);
-      current_length = 0;
+      counter++;
+    }
+    line_count++;
+  }
+  if (flags.c && !flags.l) {
+    if (!flags.h) printf("%s:", path);
+    printf("%d\n", counter);
+  }
+  if (flags.l && counter > 0 && !flags.c) {
+    printf("%s\n", path);
+  }
+  if (flags.l && flags.c) {
+    if (!flags.h) printf("%s:", path);
+    if (counter > 0) {
+      printf("1\n%s\n", path);
+    } else {
+      printf("0\n");
     }
   }
-  if (current_length > 0) {
-    line[current_length] = '\0';
-    if (flags->b && line[0] != '\n') {
-      printf("%6d\t", line_count++);
-    } else if (flags->n && !flags->b) {
-      printf("%6d\t", line_count++);
-    }
-    output_line(flags, line, current_length);
-  }
-
   fclose(f);
+}
+
+void output(Flags flags, int argc, char **argv) {
+  regex_t re;
+  int error = regcomp(&re, flags.pattern, REG_EXTENDED | flags.i);
+  if (error) {
+    perror("regcomp");
+  }
+  for (int i = optind; i < argc; i++) {
+    processFile(flags, argv[i], &re);
+  }
+  regfree(&re);
 }
