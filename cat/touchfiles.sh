@@ -18,15 +18,25 @@ filename2="test_file_2.txt"
 content2="    LITTLE RED HOOD
 And Little little LITTLE wolf
 Eyes are red
-Heart are little
-Feet are delicious
-Somebody check my mental health
-Bim bam bom bzzzzzzzzzz brr bam bam bam
-All day in my head brrrrr ba ba bab aba abbaba
-And little red
-Maybe once more Red
-Maybe once more little
-Maybe once more Red Little together"
+dfsfsfsffs
+f
+s
+df
+sf
+sds
+sdfsfsfffffff
+
+ is 3 symbol ASCII
+ is 4 symbol ASCII
+ is 5 symbol ASCII
+ is 6 symbol ASCII
+ is 7 symbol ASCII
+ is 8 symbol ASCII
+     is 9 symbol ASCII
+
+ is 10 symbol ASCII
+ is 11 symbol ASCII
+ is 12 symbol ASCII"
 
 
 
