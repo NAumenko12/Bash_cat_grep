@@ -1,42 +1,33 @@
 filename1="test_file_1.txt"
-content1="Little leaves fall softly down
-Red and yellow, orange and brown
-Whirling, twirling round and round
-Falling softly to the ground.
+content1="Little Red Riding 
+Hood was walking through the forest.
+The fox was cunning, and the dog was loyal.
+The lazy cat slept on the windowsill.
 
-Little leaves fall softly down
-To make a carpet on the ground.
-Then, swish, the wind comes whistling by
-And sends them dancing to the sky."
+The leaves fell softly from the trees.
+Little Red and her dog played in the park."
 
 filename2="test_file_2.txt"
 content2="    LITTLE RED HOOD
-And Little little LITTLE wolf
-Eyes are red
-Heart are little
-Feet are delicious
-Somebody check my mental health
-Bim bam bom bzzzzzzzzzz brr bam bam bam
-All day in my head brrrrr ba ba bab aba abbaba
-And little red
-Maybe once more Red
-Maybe once more little
-Maybe once more Red Little together"
+The fox watched from afar, hiding behind the bushes.
+Lazy days are the best days.
+Little by little, the leaves turned red.
+The dog barked at the fox, but the fox was too quick.
+Red leaves danced in the wind."
 
 filename3="test_file_3.txt"
 content3="Little"
 
 filename4="test_file_4.txt"
-content4="Little red
-Little
+content4="Little
 Red
-Nothing
-Little little
-Red red
-red
-leave"
+fox
+dog
+lazy
+leaves"
 
 echo "$content1" > "$filename1"
 echo "$content2" > "$filename2"
 echo "$content3" > "$filename3"
 echo "$content4" > "$filename4"
+
