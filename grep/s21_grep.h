@@ -24,7 +24,6 @@ typedef struct Flags {
   int o;
   char *pattern;
   int len_pattern;
-  int mem_pattern;
 } Flags;
 
 void pattern_add(Flags *flags, char *pattern);
