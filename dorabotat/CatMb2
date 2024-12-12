@@ -1,0 +1,174 @@
+#ifndef SRC_CAT_FLAGS_H_
+#define SRC_CAT_FLAGS_H_
+
+#include <getopt.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct {
+  int b;
+  int E;
+  int n;
+  int s;
+  int T;
+  int v;
+} Flags;
+
+Flags parse_cat_flags(int argc, char **argv, int *error_flag);
+char v_output(char ch);
+void output_line(Flags *flags, char *line, int len);
+int output(Flags *flags, char *filename); // Возвращает код ошибки
+
+#endif
+
+#include "s21_cat.h"
+
+Flags parse_cat_flags(int argc, char **argv, int *error_flag) {
+  Flags flags = {0};
+  struct option long_options[] = {{"number", no_argument, NULL, 'n'},
+                                  {"number-nonblank", no_argument, NULL, 'b'},
+                                  {"squeeze-blank", no_argument, NULL, 's'},
+                                  {"show-ends", no_argument, NULL, 'E'},
+                                  {"show-tabs", no_argument, NULL, 'T'},
+                                  {"show-nonprinting", no_argument, NULL, 'v'},
+                                  {0, 0, 0, 0}};
+  int opt;
+  while ((opt = getopt_long(argc, argv, "+bEnsetTv", long_options, NULL)) != -1) {
+    switch (opt) {
+      case 'b':
+        flags.b = 1;
+        break;
+      case 'E':
+        flags.E = 1;
+        break;
+      case 'n':
+        flags.n = 1;
+        break;
+      case 's':
+        flags.s = 1;
+        break;
+      case 't':
+        flags.T = 1;
+        flags.v = 1;
+        break;
+      case 'e':
+        flags.E = 1;
+        flags.v = 1;
+        break;
+      case 'T':
+        flags.T = 1;
+        break;
+      case 'v':
+        flags.v = 1;
+        break;
+      default:
+        printf("Usage: 21_cat [-bEnsTv] [file..]\n");
+        *error_flag = 1;
+        break;
+    }
+  }
+  return flags;
+}
+
+#include "s21_cat.h"
+
+char v_output(char ch) {
+  if (ch <= 31 && ch != '\n' && ch != '\r' && ch != '\t') {
+    putchar('^');
+    ch += 64;
+  } else if (ch == 127) {
+    putchar('^');
+    ch = '?';
+  }
+  return ch;
+}
+
+void output_line(Flags *flags, char *line, int len) {
+  for (int i = 0; i < len; i++) {
+    if (flags->T && line[i] == '\t') {
+      printf("^I");
+    } else {
+      if (flags->E && (line[i] == '\n' || line[i] == '\r')) {
+        putchar('$');
+      }
+      if (flags->v) {
+        line[i] = v_output(line[i]);
+      }
+      putchar(line[i]);
+    }
+  }
+}
+
+int output(Flags *flags, char *filename) {
+  FILE *f = fopen(filename, "r");
+  if (!f) {
+    perror("fopen");
+    return 1; // Возвращаем код ошибки
+  }
+  char line[4096];
+  int line_count = 1;
+  int empty_count = 0;
+  int current_length = 0;
+  int ch;
+
+  while ((ch = fgetc(f)) != EOF) {
+    line[current_length++] = ch;
+
+    if (ch == '\n') {
+      line[current_length] = '\0';
+
+      if (line[0] == '\n') {
+        empty_count++;
+      } else {
+        empty_count = 0;
+      }
+
+      if (flags->s && empty_count > 1) {
+        current_length = 0;
+        continue;
+      }
+
+      if (flags->b && line[0] != '\n') {
+        printf("%6d\t", line_count++);
+      } else if (flags->n && !flags->b) {
+        printf("%6d\t", line_count++);
+      }
+
+      output_line(flags, line, current_length);
+      current_length = 0;
+    }
+  }
+  if (current_length > 0) {
+    line[current_length] = '\0';
+    if (flags->b && line[0] != '\n') {
+      printf("%6d\t", line_count++);
+    } else if (flags->n && !flags->b) {
+      printf("%6d\t", line_count++);
+    }
+    output_line(flags, line, current_length);
+  }
+
+  fclose(f);
+  return 0; // Успешное завершение
+}
+
+#include "s21_cat.h"
+
+int main(int argc, char *argv[]) {
+  int error_flag = 0;
+  int return_code = 0;
+  Flags flags = parse_cat_flags(argc, argv, &error_flag);
+  if (error_flag || optind >= argc) {
+    printf("Usage: 21_cat [-bEnsTv] [file..]\n");
+    return_code = 1;
+  } else {
+    for (int i = optind; i < argc; i++) {
+      if (output(&flags, argv[i]) != 0) { // Проверяем код ошибки
+        return_code = 1;
+        break;
+      }
+    }
+  }
+  return return_code;
+}
